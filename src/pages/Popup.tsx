@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import ChatBar from "../components/ChatBar";
 import "./Popup.css";
 

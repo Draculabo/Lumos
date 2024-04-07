@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, SyntheticEvent, useEffect, useRef, useState } from "react";
 
 import {
   Avatar,
@@ -45,6 +45,8 @@ import ChatHistory from "./ChatHistory";
 import { CodeBlock, PreBlock } from "./CodeBlock";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 import "./ChatBar.css";
+import { useSpeechRecognitionInteractive } from "../hooks/useSpeechRecognition/useSpeechREcognitionInteractive";
+import { KeyboardReturnRounded } from "@mui/icons-material";
 
 const DEFAULT_PROMPT_PLACEHOLDER_TEXT = "Enter your prompt here";
 
@@ -52,7 +54,7 @@ export class LumosMessage {
   constructor(
     public sender: string,
     public message: string,
-  ) {}
+  ) { }
 }
 
 export interface Attachment {
@@ -83,6 +85,33 @@ const ChatBar: React.FC = () => {
   const [openChatHistory, setOpenChatHistory] = useState(false);
   const [currentChatId, setCurrentChatId] = useState("");
 
+  const { start, isLoading, stop, time, response, isRecording } = useSpeechRecognitionInteractive("zh-cn"
+  );
+
+  useEffect(() => {
+    const startRecord = (e: KeyboardEvent) => {
+      if (e.code !== "Space") {
+        return;
+      }
+      start()
+    }
+    const endRecord = () => {
+      if (!isRecording) {
+        return;
+      }
+      stop()
+      response.json().then(result => {
+        console.log(result);
+
+      })
+    }
+    document.addEventListener("keydown", startRecord)
+    document.addEventListener("keyup", endRecord)
+    return () => {
+      document.removeEventListener("keydown", startRecord)
+      document.removeEventListener("keydown", endRecord)
+    }
+  }, [])
   const { theme } = useThemeContext();
   const isDarkMode = theme.palette.mode === "dark";
 
@@ -96,9 +125,9 @@ const ChatBar: React.FC = () => {
 
   const messageStyle = isDarkMode
     ? {
-        backgroundColor: theme.palette.background.default,
-        color: theme.palette.text.primary,
-      }
+      backgroundColor: theme.palette.background.default,
+      color: theme.palette.text.primary,
+    }
     : {};
 
   const imageStyle = {
